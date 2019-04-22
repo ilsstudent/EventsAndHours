@@ -35,8 +35,8 @@ const NUMBER = 3;
 
 const skillBuilder = Alexa.SkillBuilders.custom();
 
-const API_KEY = 'l7xxf9f0edd451204e7f8e268c9e4d83eb9d';
-const API_KEY_2 = 'l7xx26fd3a8cb099462e8747e26e73c84d49 ';
+const API_KEY = '<API_KEY>';
+const API_KEY_2 = '<API_KEY>';
 
 const QUERY_TYPE = 'LibraryCatalog'; //'Everything';
 const TOPIC = 'Hemingway Ernest';
