@@ -1058,12 +1058,12 @@ function httpsGetTimes(query, datetime, displayname) {
         reject( 'Sorry. I did not understand \n '+ '"' + query + ' " <break time="0.2s/>' );
       
 
-      //RECIEVE CHUNK OF DATA
+      //RECEIVE CHUNK OF DATA
       resp.on('data', (chunk) => {
         data += chunk;
       });
 
-      //AFTER RECIEVING ENTIRE DATA
+      //AFTER RECEIVING ENTIRE DATA
       resp.on('end', () => {
 
         jsondata = JSON.parse(data);
@@ -1128,12 +1128,12 @@ async function httpsGetEvents(datetime) {
         reject( 'Sorry. No data found.');
       
 
-      //RECIEVE CHUNK OF DATA
+      //RECEIVE CHUNK OF DATA
       resp.on('data', (chunk) => {
         data += chunk;
       });
 
-      //AFTER RECIEVING ENTIRE DATA
+      //AFTER RECEIVING ENTIRE DATA
       resp.on('end', () => {
 
         jsondata = JSON.parse(data);
@@ -1187,12 +1187,12 @@ function httpsGet(url) {
         reject( 'Sorry. No data found.');
       
 
-      //RECIEVE CHUNK OF DATA
+      //RECEIVE CHUNK OF DATA
       resp.on('data', (chunk) => {
         data += chunk;
       });
 
-      //AFTER RECIEVING ENTIRE DATA
+      //AFTER RECEIVING ENTIRE DATA
       resp.on('end', () => {
 
          //console.log("HTTPGet JSONDATA %j",data);
