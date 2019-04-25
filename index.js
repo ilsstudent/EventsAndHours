@@ -49,8 +49,8 @@ const libnames = [ 'ACCOUNTING','AFA','CINEMA','DOHENY','EAST','BUSINESS','GRAND
 'ONEARCHIVE','PHILOSOPHY','SCIENCE','SPECCOLL','VKC','DEN'];
 
 const displaynames = ['Accounting','Architecture and Fine Arts','Cinematic Arts','Doheny',
-'Gaughan and Tiberti','Grand Avenue','Leavey','Music','Norris Medical',
-'ONE Archives','Hoose Library of Philosophy','Science and Engineering','Special Collections','VKC',
+'Business','Grand Depository','Leavey','Music','Norris Medical',
+'ONE Archives','Philosophy','Science and Engineering','Special Collections','VKC',
 'Wilson Dental'];
 
 // --------------------------------- DEFAULT HANDLERS ---------------------------------
@@ -130,8 +130,8 @@ const ExitHandler = {
     sessionAttributes['stop_triggered'] = true
     handlerInput.attributesManager.setSessionAttributes(sessionAttributes);
     return handlerInput.responseBuilder
-      .speak('Is there anything else I can help you with? Say stop again to exit.')
-      .withSimpleCard(SKILL_NAME, 'Is there anything else I can help you with? Say stop again to exit.')
+      .speak('Is there anything else I can help you with? You can say stop <break time="0.1s"/> to exit.')
+      .withSimpleCard(SKILL_NAME, 'Is there anything else I can help you with? Say stop to exit.')
       .reprompt('Is there anything else I can help you with? Say stop again to exit. ')
       .getResponse();
     
@@ -155,14 +155,14 @@ const ListLibrariesIntentHandler = {
     console.log('Session Attributes %j',sessionAttributes)
     var follow_up_message = ''
     if(sessionAttributes['type'] == 'libhours'){
-      follow_up_message = ' Which library should I look up the hours for? \n '
+      follow_up_message = '. Which library are you interested in? \n '
     }else{
       follow_up_message = HELP_MESSAGE
     }
-    let sp_o ='Sure, here are the list of libraries we support:  <break time="0.2s"/>\n'
+    let sp_o ='Okay! Here are the list of libraries we support:  <break time="0.2s"/>\n'
     let o ='List of libraries:\n'
     for (var lib in displaynames) {
-      sp_o+= displaynames[lib] +'<break time="0.2s"/> \n'
+      sp_o+= displaynames[lib] +'<break time="0.15s"/> \n'
       o+= displaynames[lib]+'\n'
     }
     
@@ -196,7 +196,7 @@ const LibraryHoursIntentHandler = {
   handlerInput.attributesManager.setSessionAttributes(sessionAttributes);
   console.log('Search Type is '+ sessionAttributes['type'])
   return handlerInput.responseBuilder
-      .speak('Sure, Which day are you looking for? you can say library hours on monday <break time="0.3s"/> or hours on November 30')
+      .speak('Sure, Which day are you looking for? you can say Monday <break time="0.3s"/> or May 30th')
       .reprompt(' Which day are you looking for? ' )
       .withSimpleCard(SKILL_NAME, 'Which day are you looking for? ')
       .getResponse();
@@ -280,7 +280,7 @@ const TimeIntentHandler = {
   
   
   return handlerInput.responseBuilder
-      .speak('Please tell me the library name. You can also say \'list libraries\' to choose from the list of libraries we support. ')
+      .speak('Please tell me the library name. You can also say \'list libraries\' <break time="0.1s"/> to choose from the list of libraries we support. ')
       .reprompt('Please tell me the library name. You can also say \'list libraries\' to choose from the list of libraries we support.' )
       .withSimpleCard(SKILL_NAME, 'Please tell me the library name. You can also say \'list libraries\' to choose from the list of libraries we support.')
       .getResponse();
@@ -351,6 +351,7 @@ const TimeSearchHandler = {
     }else if (sessionAttributes['dayDate']!='none'){
       date = sessionAttributes['dayDate']
     }
+    console.log('fetching hours for %s on %s', query, date)
     sessionAttributes['dayDate'] = 'none'
     sessionAttributes['libname'] = 'none'
     sessionAttributes['stop_triggered'] = false
@@ -996,16 +997,20 @@ const EventsSearchHandler = {
       for(var i = 0 ; i<responses.length; i++){
         var loc;
         try {
+          /*
           if(responses[i])
             loc = await httpsGet(responses[i][1]);
           else
             loc = 'not specified';
+          */
         } catch (error) {
           console.log(error);
         }
         console.log("Events Search: Location %s",loc);
-        outputSpeech += '\n'+ (i+1) + '. ' + format(responses[i][0])+'<break time="0.2s"/> Location is '+loc+'.\n';
-        outputText += '\n'+ (i+1) + '. ' + format(responses[i][0])+'Location: '+loc+'.\n';
+        outputSpeech += '\n'+ (i+1) + '. ' + format(responses[i][0])+'<break time="0.2s"/>\n';
+        outputText += '\n'+ (i+1) + '. ' + format(responses[i][0])+'.\n';
+        //outputSpeech += '\n'+ (i+1) + '. ' + format(responses[i][0])+'<break time="0.2s"/>\nThe location of this event is  <break time="0.0.s"/>  '+loc+'.\n';
+        //outputText += '\n'+ (i+1) + '. ' + format(responses[i][0])+' Location: '+loc+'.\n';
       }
     }
     
@@ -1044,6 +1049,7 @@ function httpsGetTimes(query, datetime, displayname) {
       '/open-hours?from=today&format=json&apikey=' + API_KEY_2;
 
     console.log("API URL :----- " + url);
+    console.log('httpGetTime for %s on %s', query, datetime)
 
     // HTTPS GET CALL TO API
     https.get(url, (resp) => {
@@ -1058,12 +1064,12 @@ function httpsGetTimes(query, datetime, displayname) {
         reject( 'Sorry. I did not understand \n '+ '"' + query + ' " <break time="0.2s/>' );
       
 
-      //RECEIVE CHUNK OF DATA
+      //RECIEVE CHUNK OF DATA
       resp.on('data', (chunk) => {
         data += chunk;
       });
 
-      //AFTER RECEIVING ENTIRE DATA
+      //AFTER RECIEVING ENTIRE DATA
       resp.on('end', () => {
 
         jsondata = JSON.parse(data);
@@ -1071,27 +1077,29 @@ function httpsGetTimes(query, datetime, displayname) {
        // console.log(jsondata);
         
         var isvalidquery = jsondata.day;
-        
+        var len = Object.keys(isvalidquery).length
+        console.log('Entry count %d', len)
+        var day  = new Date(datetime.replace("Z","")).getDay() + 1
         if (isvalidquery) {
           var done =false;
-          
-          for (var i = 0 ; i<8 ;i++)
-            if( isvalidquery[i].date === datetime){
-              //console.log(isvalidquery[i].date);
-              //console.log(datetime);
+          for (var entry =0; entry <len; entry++){
+            var curDay = isvalidquery[entry]
+            var day2 = parseInt(curDay.day_of_week.value)
+            
+            if( day2 - day == 0){
+               console.log("Match for Day: %j and %s", curDay, day);
                 done = true;
-                if(isvalidquery[i].hour.length > 0)
-                resolve(isvalidquery[i].hour[0]);
+                if(curDay.hour.length > 0)
+                resolve(curDay.hour[0]);
                 else{
                  // var libname = query.charAt(0).toUpperCase() + query.slice(1);
                   reject(displayname + " will be closed for the day.");
                 }
             }
+          }
           if(!done)
-          reject( 'Sorry, I do not have information for that day. I only have information within a range of one week, starting from today .');
-          
+          reject( 'Sorry, I do not have information for that day');
         }
-
         else {
           reject( 'Sorry,  I am unable to proceed as I do not understand what you are looking for' );
         }
@@ -1128,12 +1136,12 @@ async function httpsGetEvents(datetime) {
         reject( 'Sorry. No data found.');
       
 
-      //RECEIVE CHUNK OF DATA
+      //RECIEVE CHUNK OF DATA
       resp.on('data', (chunk) => {
         data += chunk;
       });
 
-      //AFTER RECEIVING ENTIRE DATA
+      //AFTER RECIEVING ENTIRE DATA
       resp.on('end', () => {
 
         jsondata = JSON.parse(data);
@@ -1148,13 +1156,18 @@ async function httpsGetEvents(datetime) {
             if( isvalidquery[i].node ){
               var start = isvalidquery[i].node['Start Date'].slice(0,10)
               var end = isvalidquery[i].node['End Date'].slice(0,10)
-              var start_date =new Date(start.slice(0,date_len))
+              var start_date =new Date(start.slice(0,date_len)) 
               var end_date= new Date(end.slice(0,date_len))
               var title = isvalidquery[i].node.Title;
               var link = isvalidquery[i].node.Link;
               if( start_date - d <=0 &&  end_date - d >= 0){
                 global.event_links.push(link);
-                list.push([title + ". Starts on "+ start +" and ends on "+ end+".",link]);
+                
+                if(end_date - start_date > 0){
+                  list.push([title + ". \nStarts on "+ start +" and ends on "+ end+"",link]);
+                }else{
+                  list.push([title + ". \nThe event is scheduled on "+ start +"",link]);
+                }
                 //const resp = httpsGet(link)
                 //console.log('Response from Link %s : %j', link, resp)
               }
@@ -1187,12 +1200,12 @@ function httpsGet(url) {
         reject( 'Sorry. No data found.');
       
 
-      //RECEIVE CHUNK OF DATA
+      //RECIEVE CHUNK OF DATA
       resp.on('data', (chunk) => {
         data += chunk;
       });
 
-      //AFTER RECEIVING ENTIRE DATA
+      //AFTER RECIEVING ENTIRE DATA
       resp.on('end', () => {
 
          //console.log("HTTPGet JSONDATA %j",data);
